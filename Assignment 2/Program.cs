@@ -1,11 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace Assignment2
 {
     class Program
     {
+        // Shared context used by all the CRUD methods below
+        static AppDBContext context = new AppDBContext();
+
         static void Main(string[] args)
         {
             TestDatabase();
@@ -14,131 +16,78 @@ namespace Assignment2
             Console.ReadKey();
         }
 
-        // ===========================================================
-        // 1. List all of the users
-        // ===========================================================
-        static List<Entities.User> ListAllUsers()
-        {
-            using (var context = new AppDBContext())
-            {
-                return context.Users.ToList();
-            }
-        }
-
-        // ===========================================================
-        // 2. Add a new User
-        // ===========================================================
-        static void AddUser(string firstName, string lastName, string email)
-        {
-            using (var context = new AppDBContext())
-            {
-                var newUser = new Entities.User
-                {
-                    FirstName = firstName,
-                    LastName = lastName,
-                    Email = email
-                };
-
-                context.Users.Add(newUser);
-                context.SaveChanges();
-            }
-        }
-
-        // ===========================================================
-        // 3. Update a User
-        // ===========================================================
-        static void UpdateUser(int id, string firstName, string lastName, string email)
-        {
-            using (var context = new AppDBContext())
-            {
-                var userToUpdate = context.Users.FirstOrDefault(u => u.Id == id);
-
-                if (userToUpdate != null)
-                {
-                    userToUpdate.FirstName = firstName;
-                    userToUpdate.LastName = lastName;
-                    userToUpdate.Email = email;
-                    context.SaveChanges();
-                }
-                else
-                {
-                    Console.WriteLine($"UpdateUser: no user found with Id {id}.");
-                }
-            }
-        }
-
-        // ===========================================================
-        // 4. Delete a User
-        // ===========================================================
-        static void DeleteUser(int id)
-        {
-            using (var context = new AppDBContext())
-            {
-                var userToDelete = context.Users.FirstOrDefault(u => u.Id == id);
-
-                if (userToDelete != null)
-                {
-                    context.Users.Remove(userToDelete);
-                    context.SaveChanges();
-                }
-                else
-                {
-                    Console.WriteLine($"DeleteUser: no user found with Id {id}.");
-                }
-            }
-        }
-
-        // ---------------------------------------------------------
-        // Helper used by TestDatabase to print the current list
-        // ---------------------------------------------------------
-        static void PrintAllUsers(string header)
-        {
-            Console.WriteLine($"\n--- {header} ---");
-            List<Entities.User> users = ListAllUsers();
-
-            if (users.Count == 0)
-            {
-                Console.WriteLine("(no users found)");
-            }
-            else
-            {
-                foreach (var user in users)
-                {
-                    Console.WriteLine($"Id: {user.Id}, Name: {user.FirstName} {user.LastName}, Email: {user.Email}");
-                }
-            }
-        }
-
-        // ===========================================================
-        // TestDatabase: calls each CRUD method, listing all users
-        // after each one so the result of every operation is visible
-        // ===========================================================
         static void TestDatabase()
         {
-            PrintAllUsers("Initial list of users");
+            // List all users first
+            ListAllUsers();
 
-            // 1. List all users (already shown above)
+            // Add a new user
+            AddUser();
+            ListAllUsers();
 
-            // 2. Add a new user, then list
-            AddUser("John", "Smith", "john.smith@example.com");
-            PrintAllUsers("Users after AddUser");
+            // Update a user
+            UpdateUser();
+            ListAllUsers();
 
-            // Grab the user we just added so we can update/delete it
-            var addedUser = ListAllUsers().FirstOrDefault(u => u.Email == "john.smith@example.com");
+            // Delete a user
+            DeleteUser();
+            ListAllUsers();
+        }
 
-            // 3. Update that user, then list
-            if (addedUser != null)
+        // 1. List all of the users
+        static void ListAllUsers()
+        {
+            Console.WriteLine("\n--- All Users ---");
+            var users = context.Users.ToList();
+
+            foreach (var user in users)
             {
-                UpdateUser(addedUser.Id, "Jonathan", "Smith-Updated", "jonathan.smith@example.com");
+                Console.WriteLine($"Id: {user.UserId}, Name: {user.Name}, Email: {user.EmailAddress}, Phone: {user.PhoneNumber}");
             }
-            PrintAllUsers("Users after UpdateUser");
+        }
 
-            // 4. Delete that user, then list
-            if (addedUser != null)
+        // 2. Add a new User
+        static void AddUser()
+        {
+            Console.WriteLine("\n--- Adding New User ---");
+            var newUser = new User
             {
-                DeleteUser(addedUser.Id);
+                Name = "David Brown",
+                EmailAddress = "david@email.com",
+                PhoneNumber = "555-4444"
+            };
+
+            context.Users.Add(newUser);
+            context.SaveChanges();
+            Console.WriteLine("User added!");
+        }
+
+        // 3. Update a User
+        static void UpdateUser()
+        {
+            Console.WriteLine("\n--- Updating User ---");
+            var user = context.Users.FirstOrDefault(u => u.Name == "David Brown");
+
+            if (user != null)
+            {
+                user.PhoneNumber = "555-9999";
+                context.SaveChanges();
+                Console.WriteLine("User updated!");
             }
-            PrintAllUsers("Users after DeleteUser");
+        }
+
+        // 4. Delete a User
+        static void DeleteUser()
+        {
+            Console.WriteLine("\n--- Deleting User ---");
+            var user = context.Users.FirstOrDefault(u => u.Name == "David Brown");
+
+            if (user != null)
+            {
+                context.Users.Remove(user);
+                context.SaveChanges();
+                Console.WriteLine("User deleted!");
+            }
         }
     }
 }
